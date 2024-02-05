@@ -3,10 +3,11 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required,logout_user
 from flask_security import roles_required, roles_accepted
 from flask_mail import Mail
+from flask_migrate import Migrate, upgrade
 
 app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:password@localhost/flaskS'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:password@localhost/flaskS2'
 app.config['SECRET_KEY'] = 'supersecret'
 app.config['SECURITY_REGISTERABLE'] = True
 app.config['SECURITY_PASSWORD_SALT'] = 'supersecretsalt'
@@ -21,7 +22,7 @@ app.config['SECURITY_EMAIL_SENDER'] = '"MyApp"<norepyly@example.com>'  # Byt ut 
 
 
 db = SQLAlchemy(app)
-
+migrate = Migrate(app, db)
 
 mail = Mail(app)
 
@@ -41,7 +42,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(100))
     active = db.Column(db.Boolean())
     fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False)  # Lägg till denna rad
-    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('user', lazy='dynamic'))
 
 # Sätt upp Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -83,22 +84,26 @@ def admin_page():
     return "Admin Page"
 
 @app.route('/users')
-@roles_accepted('Admin', 'Users')
+@roles_accepted('Admin', 'User')
 def user_pate():
     return render_template('users.html')
 
 
 def create_user():
     db.create_all()
-    if not User.query.first():
-        user_datastore.create_user(email='test@example.com', password='password')
-        db.session.commit()
     if not Role.query.first():
         user_datastore.create_role(name='Admin')
         user_datastore.create_role(name='User')
+    db.session.commit()
+    if not User.query.first():
+        user_datastore.create_user(email='test@example.com', password='password', roles=['Admin','User'])
+        user_datastore.create_user(email='c@c.com', password='password', roles=['User'])
+        user_datastore.create_user(email='d@d.com', password='password', roles=['Admin'])
         db.session.commit()
+ 
 
 if __name__ == '__main__':
     with app.app_context():
+        upgrade()
         create_user()   
     app.run(debug=True)

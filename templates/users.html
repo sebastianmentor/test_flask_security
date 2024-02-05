@@ -1,3 +1,14 @@
 {% if current_user.is_authenticated %}
-  Hi {{ current_user.name }}!
+  Hi {{ current_user.roles }}! <br>
+  {{ current_user.email }}
+  {% for role in current_user.roles%}
+    {{role.name}}
+    {% endfor %}
+
+    {% if 'Admin' in current_user.roles%}
+        <h1>ADMIN</h1>
+    {% else %}
+        <h1>USER</h1>
+    {% endif %}
+
 {% endif %}
