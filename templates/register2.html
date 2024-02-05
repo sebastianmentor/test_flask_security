@@ -1,0 +1,11 @@
+<form action="{{url_for('register2')}}" method="POST">
+
+    <input type="email" name="email" placeholder="Email"/>
+    <input type="password" name="password" placeholder="Password"/>
+    <input list="roles" name="role" placeholder="Roles"/>
+    <datalist id="roles">
+        <option value="User">
+        <option value="Admin">
+    </datalist>
+    <input type="submit" value="Register"/>
+</form>
